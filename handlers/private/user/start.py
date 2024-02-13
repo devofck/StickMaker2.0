@@ -10,6 +10,9 @@ from aiogram.types import FSInputFile
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from database.models import User
 from sqlalchemy import select
+from funcs.sticker_sets.title_generation import format_title
+from config_reader import sticker_global_settings
+
 start_router = Router()
 
 
@@ -21,8 +24,11 @@ async def start_bot(m: Message, state: FSMContext, session: AsyncSession):
     if user == 0:
         # if user already has been registered
         await m.answer(
-            '*Главное меню*'
+            '<b>👋 И тебе бип-боп-привет!</b>\n\n'
+            'Воспользуйся меню ниже!',
+            reply_markup=keyboard.main_user_menu()
         )
+        await state.clear()
     elif not user:
         # if it is new user
         new_user = User(
@@ -80,8 +86,12 @@ async def create_first_pack(c: CallbackQuery, state: FSMContext):
 
 @start_router.message(FirstPack.enter_name)
 async def check_name(m: Message, state: FSMContext):
+    if len(m.text) > 20:
+        await m.answer('<b>Упс.. название слишком длинное!</b>\n\n'
+                       'Попробуйте еще раз :)')
+        return
     text = (f'😌 Неплохо.. вы назвали свой набор <b>"{m.text}"</b>\n\n'
-        f'Оставляем такое название или меняем?')
+            f'Оставляем такое название или меняем?')
 
     if 'флип' in m.text.lower() or 'fleep' in m.text.lower():
         text += ('\n\nБатюшки.. <a href="https://t.me/fleepy4">Флип</a> - это '
@@ -93,8 +103,9 @@ async def check_name(m: Message, state: FSMContext):
     await state.set_state(
         FirstPack.confirm_name
     )
+
     await state.update_data(
-        pack_title=m.text
+        pack_title=format_title(m.text, sticker_global_settings.username)
     )
 
 
@@ -121,7 +132,7 @@ async def approve_pack_title(c: CallbackQuery, state: FSMContext):
         pass
     data = await state.get_data()
     await c.message.answer(
-        f"<b>{data['pack_title']}</b> - звучит сильно 🤘!\n"
+        f"<b>{data['pack_title'].replace(sticker_global_settings.username, '')}</b> - звучит сильно 🤘!\n"
         f"<i>🚀 У набора есть будущее!</i>\n\n"
         f"Пришли стикер, фотку, GIF или даже видео и я помещу его в набор!"
     )

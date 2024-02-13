@@ -16,4 +16,10 @@ class Settings(BaseSettings):
     base: str
 
 
+class StickerAdvert(BaseSettings):
+    username: str = ' @StickMaker_robot'
+    bot_postfix: str = '_by_in_progress_bot'
+
+
 config = Settings()
+sticker_global_settings = StickerAdvert()

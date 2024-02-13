@@ -1,14 +1,14 @@
 import random
+from config_reader import sticker_global_settings
 
 
 def create_uniq_name() -> str:
     symbols = 'abcdefghijklnopqrstuvwxyz'
     symbols += symbols.upper()
-    symbols += '1234567890'
     res = ''
     for _ in range(8):
         res += random.choice(symbols)
-    res += '_by_in_progress_bot'
+    res += sticker_global_settings.bot_postfix
     return res
 
 
@@ -19,7 +19,28 @@ def random_file_name(file_format: str) -> str:
 
 
 def get_random_emojis():
-    emoji_list = '😀😃😄😁😆🥹😅😂🤣🥲☺️😊😇🙂🙃😉😌😍🥰😘😗😙😚😋😛😝😜🤪🤨🧐🤓😎🥸🤩🥳😏😒😞😔😟😕🙁'
+    emoji_list = [
+        '🥳',
+        '🥸',
+        '🤓',
+        '😎',
+        '🧐',
+        '🤨',
+        '🤪',
+        '😜',
+        '😝',
+        '😛',
+        '😋',
+        '😚',
+        '😙',
+        '😗',
+        '😘',
+        '🥰',
+        '😍',
+        '😌',
+        '😉',
+        '🙃'
+    ]
     res = []
     for _ in range(15):
         res.append(random.choice(emoji_list))

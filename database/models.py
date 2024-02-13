@@ -35,3 +35,5 @@ class StickerPack(Base):
     title: Mapped[str]
     date: Mapped[bigint]
 
+# class Settings(Base):
+#     __tablename__ = 'sets'

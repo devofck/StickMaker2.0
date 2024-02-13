@@ -1,3 +1,9 @@
+"""
+Legends never die
+Отче, сохрани его от падение и прочих несчастий
+Аминь
+"""
+
 import asyncio
 from aiogram import Bot, Dispatcher
 from config_reader import config
@@ -9,6 +15,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from session import session
 from database.models import Base
 from middlewares.session_factory import DbSessionMiddleware
+
 
 async def main() -> None:
     """
@@ -39,7 +46,9 @@ async def main() -> None:
     dp = Dispatcher(storage=storage)
     dp.include_routers(
         private_funcs.start_router,
-        private_funcs.stick_processor
+        private_funcs.stick_processor,
+        private_funcs.main_user_menu,
+        private_funcs.stickers_add
     )
     dp.update.middleware(DbSessionMiddleware(session_pool=sessionmaker))
     await dp.start_polling(bot)
