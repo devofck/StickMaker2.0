@@ -8,3 +8,11 @@ class RenamePack(StatesGroup):
 
 class AddStickers(StatesGroup):
     add_stickers = State()
+
+
+class DeleteStickers(StatesGroup):
+    delete_stickers = State()
+
+
+class Reports(StatesGroup):
+    wait_for_sticker = State()

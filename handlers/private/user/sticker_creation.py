@@ -111,7 +111,7 @@ async def process_first_photo(m: Message, state: FSMContext, bot: Bot, session: 
     os.remove(new_file)
     await state.clear()
     await gratitude_for_first_creation(m.from_user.id, link, bot)
-    os.remove(new_file)
+
 
 
 @stick_processor.message(FirstPack.enter_first_sticker, F.video_note)

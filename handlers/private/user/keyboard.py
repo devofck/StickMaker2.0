@@ -87,7 +87,7 @@ def pack_management(name):
     kb = InlineKeyboardBuilder()
     look_at_pack = InlineKeyboardButton(
         text='🔎 Посмотреть набор',
-        url= 'https://t.me/addstickers/' + name
+        url='https://t.me/addstickers/' + name
     )
     add_sticker = InlineKeyboardButton(
         text='🌴 Добавить стикер',
@@ -145,3 +145,75 @@ def back_to_sticker_management_rk():
 def remove_keyboard_buttons():
     kb = ReplyKeyboardRemove()
     return kb
+
+
+def back_to_main_menu():
+    kb = InlineKeyboardBuilder()
+    kb.add(
+        InlineKeyboardButton(
+            text='Назад',
+            callback_data='back_to_main_menu'
+        )
+    )
+    return kb.as_markup()
+
+
+def can_i_help():
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        InlineKeyboardButton(
+            text='Да, помоги мне!',
+            callback_data="accept_report_help_order"
+        )
+    )
+    kb.row(
+        InlineKeyboardButton(
+            text='Нет, спасибо!',
+            callback_data='deny_report_help_order'
+        )
+    )
+    return kb.as_markup()
+
+
+def ask_for_reason_of_report():
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        InlineKeyboardButton(
+            text='Он оскорбляет честь и достоинстово',
+            callback_data='reason:0',
+        )
+    )
+    kb.row(
+        InlineKeyboardButton(
+            text='Он демонстрирует насилие',
+            callback_data='reason:1'
+        )
+    )
+    kb.row(
+        InlineKeyboardButton(
+            text='Набор содержит 18+ контент',
+            callback_data='reason:2'
+        )
+    )
+    return kb.as_markup()
+
+
+def verdict(name):
+    kb = InlineKeyboardBuilder()
+    kb.row(
+        InlineKeyboardButton(
+            text='Посмотреть набор',
+            url='https://t.me/addstickers/' + name
+        )
+    )
+    kb.row(
+        InlineKeyboardButton(
+            text='🗑 Удалить набор',
+            callback_data='delete_pack:' + name
+        ),
+        InlineKeyboardButton(
+            text='✅ Сохранить набор',
+            callback_data='keep_pack:' + name
+        )
+    )
+    return kb.as_markup()
