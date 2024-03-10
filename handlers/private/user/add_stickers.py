@@ -31,6 +31,7 @@ async def add_video_sticker_to_set(m: Message, state: FSMContext, bot: Bot):
         )
     )
     await m.answer("<b>✅ Стикер добавлен в набор!</b>")
+    os.remove(destination_directory)
 
 
 @stickers_add.message(AddStickers.add_stickers, F.photo)

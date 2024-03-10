@@ -13,24 +13,40 @@ from handlers.private.user.keyboard import explore_pack, main_user_menu
 from funcs.sticker_sets.formatter import get_converted_file
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from database.models import StickerPack, User
-
+from sqlalchemy import select
 stick_processor = Router()
 
 
-async def gratitude_for_first_creation(tg_id: int, link: str, bot: Bot):
-    await bot.send_message(
-        chat_id=tg_id,
-        text='❤️ Пуфф! <b>Это твой первый набор!\n\nМои поздравления</b> или как радуются'
-        ' боты вроде меня:\n"🎉 БИП-БУП БИМ-БИМ!!!"',
-        reply_markup=explore_pack(link)
+async def gratitude_for_first_creation(tg_id: int, link: str, bot: Bot, session: AsyncSession):
+    data = await session.scalars(
+        select(StickerPack.title).where(User.id == tg_id)
     )
-    await bot.send_message(
-        chat_id=tg_id,
-        text='<b>🙃 Кстати! Ты прошел мини обучения по боту!</b>\n'
-             '<i>Да.. все было так просто</i>\n\n'
-             'Как быстро они растут 😢',
-        reply_markup=main_user_menu()
-    )
+    if not data:
+        await bot.send_message(
+            chat_id=tg_id,
+            text='❤️ Пуфф! <b>Это твой первый набор!\n\nМои поздравления</b> или как радуются'
+            ' боты вроде меня:\n"🎉 БИП-БУП БИМ-БИМ!!!"',
+            reply_markup=explore_pack(link)
+        )
+        await bot.send_message(
+            chat_id=tg_id,
+            text='<b>🙃 Кстати! Ты прошел мини обучения по боту!</b>\n'
+                 '<i>Да.. все было так просто</i>\n\n'
+                 'Как быстро они растут 😢',
+            reply_markup=main_user_menu()
+        )
+    else:
+        await bot.send_message(
+            chat_id=tg_id,
+            text='<b>❤️ Е-е-е-е, это будет круто!</b>\n\n'
+                 'Этот набор теперь можно найти по кнопке "💎 Управление наборами"',
+            reply_markup=explore_pack(link)
+        )
+        await bot.send_message(
+            chat_id=tg_id,
+            text='<b>Воспользуйтесь клавиатурой ниже для работы с ботом</b>',
+            reply_markup=main_user_menu()
+        )
 
 
 # create first_sticker
@@ -68,7 +84,7 @@ async def process_first_video_sticker(m: Message, state: FSMContext, bot: Bot, s
     link = 'https://t.me/addstickers/' + name
 
     await state.clear()
-    await gratitude_for_first_creation(m.from_user.id, link, bot)
+    await gratitude_for_first_creation(m.from_user.id, link, bot, session)
 
 
 @stick_processor.message(FirstPack.enter_first_sticker, F.photo)
@@ -83,9 +99,7 @@ async def process_first_photo(m: Message, state: FSMContext, bot: Bot, session: 
         file_path=file.file_path,
         destination=file_title
     )
-    await m.answer(
-        str(get_random_emojis())
-    )
+
     new_file = get_converted_file(file_title)
     await bot.create_new_sticker_set(
         user_id=m.from_user.id,
@@ -110,8 +124,7 @@ async def process_first_photo(m: Message, state: FSMContext, bot: Bot, session: 
     link = 'https://t.me/addstickers/' + name
     os.remove(new_file)
     await state.clear()
-    await gratitude_for_first_creation(m.from_user.id, link, bot)
-
+    await gratitude_for_first_creation(m.from_user.id, link, bot, session)
 
 
 @stick_processor.message(FirstPack.enter_first_sticker, F.video_note)
@@ -126,7 +139,7 @@ async def process_first_photo(m: Message, state: FSMContext, bot: Bot, session: 
         file_path=file.file_path,
         destination=file_title
     )
-    new_file = get_converted_file(file_title, content_type='video_note')
+    new_file = get_converted_file(file_title)
 
     await bot.create_new_sticker_set(
         user_id=m.from_user.id,
@@ -152,7 +165,7 @@ async def process_first_photo(m: Message, state: FSMContext, bot: Bot, session: 
     link = 'https://t.me/addstickers/' + name
     os.remove(new_file)
     await state.clear()
-    await gratitude_for_first_creation(m.from_user.id, link, bot)
+    await gratitude_for_first_creation(m.from_user.id, link, bot, session)
 
 
 @stick_processor.message(FirstPack.enter_first_sticker, F.sticker.is_animated == False)
@@ -167,9 +180,7 @@ async def process_photo_sticker(m: Message, state: FSMContext, bot: Bot, session
         file_path=file.file_path,
         destination=file_title
     )
-    await m.answer(
-        str(get_random_emojis())
-    )
+
     new_file = get_converted_file(file_title)
     await bot.create_new_sticker_set(
         user_id=m.from_user.id,
@@ -194,7 +205,7 @@ async def process_photo_sticker(m: Message, state: FSMContext, bot: Bot, session
     link = 'https://t.me/addstickers/' + name
     os.remove(new_file)
     await state.clear()
-    await gratitude_for_first_creation(m.from_user.id, link, bot)
+    await gratitude_for_first_creation(m.from_user.id, link, bot, session)
 
 
 @stick_processor.message(FirstPack.enter_first_sticker, F.video)
@@ -203,6 +214,7 @@ async def process_video(m: Message, state: FSMContext, bot: Bot, session: AsyncS
         await m.answer(
             '<b>Видео слишком длинное!</b>'
         )
+        return
     data = await state.get_data()
     name = create_uniq_name()
     file = await bot.get_file(file_id=m.video.file_id)
@@ -233,8 +245,51 @@ async def process_video(m: Message, state: FSMContext, bot: Bot, session: AsyncS
     )
     session.add(new_set)
     await session.commit()
-
     link = 'https://t.me/addstickers/' + name
     os.remove(new_file)
     await state.clear()
-    await gratitude_for_first_creation(m.from_user.id, link, bot)
+    await gratitude_for_first_creation(m.from_user.id, link, bot, session)
+
+
+@stick_processor.message(FirstPack.enter_first_sticker, F.animation)
+async def process_gif(m: Message, state: FSMContext, bot: Bot, session: AsyncSession):
+    print('+++++++++++++++++++++++++')
+    if m.animation.duration > 15:
+        await m.answer(
+            '<b>Видео слишком длинное!</b>'
+        )
+        return
+    data = await state.get_data()
+    name = create_uniq_name()
+    file = await bot.get_file(file_id=m.animation.file_id)
+    destination_directory = random_file_name('.mp4')
+    await bot.download_file(
+        file_path=file.file_path,
+        destination=destination_directory
+    )
+    new_file = get_converted_file(destination_directory)
+
+    await bot.create_new_sticker_set(
+        user_id=m.from_user.id,
+        name=name,
+        title=data['pack_title'],
+        sticker_format='video',
+        stickers=[InputSticker(
+            sticker=FSInputFile(
+                path=new_file,
+            ),
+            emoji_list=get_random_emojis()
+        )]
+    )
+    new_set = StickerPack(
+        name=name,
+        owner_id=m.from_user.id,
+        title=data['pack_title'],
+        date=int(time.time()),
+    )
+    session.add(new_set)
+    await session.commit()
+    link = 'https://t.me/addstickers/' + name
+    os.remove(new_file)
+    await state.clear()
+    await gratitude_for_first_creation(m.from_user.id, link, bot, session)

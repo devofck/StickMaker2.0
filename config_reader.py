@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
 class StickerAdvert(BaseSettings):
     username: str = ' @StickMaker_robot'
-    bot_postfix: str = '_by_in_progress_bot'
+    bot_postfix: str = '_by_StickMaker_robot'
     channel_id: int = -1001847782569
     reports_id: int = -1001914767401
 

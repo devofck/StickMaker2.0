@@ -16,3 +16,12 @@ class DeleteStickers(StatesGroup):
 
 class Reports(StatesGroup):
     wait_for_sticker = State()
+
+
+class PackCreation(StatesGroup):
+    wait_for_name = State()
+    wait_for_sticker = State()
+
+
+class BlockUntilStarted(StatesGroup):
+    block = State()

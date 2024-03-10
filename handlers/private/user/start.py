@@ -10,11 +10,17 @@ from aiogram.types import FSInputFile
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from database.models import User
 from sqlalchemy import select
+from states.user.pack_management_states import BlockUntilStarted
 from funcs.sticker_sets.title_generation import format_title
 from config_reader import sticker_global_settings
+from filters.chat_type_filter import ChatTypeFilter
 
 start_router = Router()
-
+start_router.message.filter(
+    ChatTypeFilter(
+        chat_type='private'
+    )
+)
 
 @start_router.message(CommandStart())
 async def start_bot(m: Message, state: FSMContext, session: AsyncSession):
@@ -40,6 +46,7 @@ async def start_bot(m: Message, state: FSMContext, session: AsyncSession):
         await m.answer_sticker(
             sticker='CAACAgIAAxkBAAEXE-NlNugrdm07DGm'
                     'duPJ0i7HB82I7TgACxDcAAqLd0Eq1HDHLy7P_ETAE',
+            reply_markup=keyboard.remove_keyboard_buttons()
         )
         await asyncio.sleep(1)
         await m.answer(
@@ -58,6 +65,15 @@ async def start_bot(m: Message, state: FSMContext, session: AsyncSession):
             '😉 Попробуем?',
             reply_markup=keyboard.ask_create_pack()
         )
+
+
+@start_router.message(BlockUntilStarted.block)
+async def block_until_started(m: Message, state: FSMContext):
+    await m.answer(
+        '<b>☝️ Для корректного начала работы, отправьте боту /start !</b>\n\n'
+        'Ну или просто по приколу кнопкой ниже)))',
+        reply_markup=keyboard.start_btn()
+    )
 
 
 @start_router.callback_query(F.data == 'create_first_pack')
@@ -87,8 +103,7 @@ async def create_first_pack(c: CallbackQuery, state: FSMContext):
 @start_router.message(FirstPack.enter_name)
 async def check_name(m: Message, state: FSMContext):
     if len(m.text) > 20:
-        await m.answer('<b>Упс.. название слишком длинное!</b>\n\n'
-                       'Попробуйте еще раз :)')
+        await m.answer('<b>Упс.. название слишком длинное!</b>\n\n' + 'Попробуйте еще раз :)')
         return
     text = (f'😌 Неплохо.. вы назвали свой набор <b>"{m.text}"</b>\n\n'
             f'Оставляем такое название или меняем?')

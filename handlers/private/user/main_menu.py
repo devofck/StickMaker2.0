@@ -11,13 +11,22 @@ from states.user.pack_management_states import (
     RenamePack,
     AddStickers,
     DeleteStickers,
-    Reports
+    Reports,
 )
+from states.user.first_pack_state import FirstPack
 from funcs.sticker_sets.report_builder import build_report
 from funcs.sticker_sets.title_generation import format_title
+from filters.motiv_filter import IsSubscribed
+from filters.chat_type_filter import ChatTypeFilter
 
 main_user_menu = Router()
-
+main_user_menu.message.filter(IsSubscribed())
+main_user_menu.callback_query.filter(IsSubscribed())
+main_user_menu.message.filter(
+    ChatTypeFilter(
+        chat_type='private'
+    )
+)
 
 @main_user_menu.message(F.text == '💎 Управление наборами')
 async def show_my_packs(m: Message, session: AsyncSession):
@@ -32,6 +41,13 @@ async def show_my_packs(m: Message, session: AsyncSession):
         text='<b>🤩 Вот список ваших наборов!</b>\n\n'
              'Кликни на нужный для взаимодействия',
         reply_markup=keyboard.my_sets(sets)
+    )
+
+
+@main_user_menu.callback_query(F.data == 'check_sub')
+async def check_sub(c: CallbackQuery):
+    await c.message.edit_text(
+        '<b>Весь функционал бота теперь доступен</b>'
     )
 
 
@@ -300,3 +316,42 @@ async def return_report_text(c: CallbackQuery, state: FSMContext):
         '✅ Отправьте жалобу с этим текстом на официальную почту: sticker@telegram.org\n'
         '<i>Разумеется, вы можете редактировать этот текст под конкретный случай</i>'
     )
+
+
+@main_user_menu.callback_query(F.data == 'create_new_pack')
+async def create_new_pack(c: CallbackQuery, state: FSMContext):
+    await c.message.answer(
+        '<b>Опа! Новый наборчик подоспел.</b>\n\n'
+        'Пришли название для своего набора!',
+        reply_markup=keyboard.back_to_main_menu()
+    )
+    await state.set_state(FirstPack.enter_name)
+
+
+@main_user_menu.callback_query(F.data.startswith('publish_pack'))
+async def offer_pack_to_publish(c: CallbackQuery, state: FSMContext, session: AsyncSession, bot: Bot):
+    pack_name = c.data.split(":")[1]
+    data = await session.scalar(
+        select(StickerPack.is_offered).where(StickerPack.name == pack_name)
+    )
+    if data:
+        await c.message.edit_text(
+            '<b>❌ Вы уже предлагали этот набор к публикации!</b>',
+            reply_markup=keyboard.back_to_sticker_management(pack_name)
+        )
+        return
+    await c.message.edit_text(
+        '<b>🤩 Вы успешно предложили набор для публикации в @my_little_stickers!</b>\n\n'
+        'Если модерация одобрит его, то набор появится в канале!',
+        reply_markup=keyboard.back_to_sticker_management(pack_name)
+    )
+    await bot.send_message(
+        chat_id=sticker_global_settings.channel_id,
+        text='<b>Предложение о публикации стикерпака!</b>',
+        reply_markup=keyboard.look_pack(pack_name)
+    )
+    await session.execute(
+        update(StickerPack).where(StickerPack.name == pack_name).values(is_offered=True)
+    )
+    await session.commit()
+

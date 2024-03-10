@@ -25,8 +25,6 @@ def main_user_menu():
     kb = ReplyKeyboardBuilder()
     kb.add(
         KeyboardButton(text='💎 Управление наборами')
-    ).add(
-        KeyboardButton(text='📕 Инструкция')
     ).row(
         KeyboardButton(text='⭕️ Жалоба на чужой набор')
     )
@@ -54,7 +52,7 @@ def explore_pack(link: str):
     ).row(
         InlineKeyboardButton(
             text='🟢 Добавить стикеры',
-            callback_data='add_sticker_to:' + link.split('/')[-1]
+            callback_data='add_sticker_to_exists_pack:' + link.split('/')[-1]
         )
     )
     return kb.as_markup()
@@ -78,8 +76,9 @@ def my_sets(sets):
             )
         )
     kb.row(
-        InlineKeyboardButton(text='🔙 Назад', callback_data='back_to_my_packs')
+        InlineKeyboardButton(text='🪄 Создать новый', callback_data='create_new_pack')
     )
+
     return kb.as_markup()
 
 
@@ -214,6 +213,43 @@ def verdict(name):
         InlineKeyboardButton(
             text='✅ Сохранить набор',
             callback_data='keep_pack:' + name
+        )
+    )
+    return kb.as_markup()
+
+
+def look_pack(name):
+    kb = InlineKeyboardBuilder()
+    look_at_pack = InlineKeyboardButton(
+        text='🔎 Посмотреть набор',
+        url='https://t.me/addstickers/' + name
+    )
+    kb.add(look_at_pack)
+    return kb.as_markup()
+
+
+def start_btn():
+    kb = ReplyKeyboardBuilder()
+    kb.add(
+        KeyboardButton(text="/start")
+    )
+    return kb.as_markup(resize_keyboard=True)
+
+
+def motiv_kb(channels):
+    kb = InlineKeyboardBuilder()
+
+    for channel in channels:
+        kb.row(
+            InlineKeyboardButton(
+                text=channel.title,
+                url=channel.link
+            )
+        )
+    kb.row(
+        InlineKeyboardButton(
+            text='✅ Я подписался',
+            callback_data='check_sub'
         )
     )
     return kb.as_markup()
